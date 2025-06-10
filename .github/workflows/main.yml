@@ -1,0 +1,37 @@
+name: Despliegue a Surge.sh
+
+# Este workflow se ejecuta cuando hay un push a la rama 'main'
+on:
+  push:
+    branches:
+      - main # Asegúrate de que esta sea la rama principal de tu repositorio (puede ser 'master' si no la cambiaste)
+
+# Definición de los jobs (tareas) que se ejecutarán
+jobs:
+  deploy:
+    # El entorno donde se ejecutará el job (una máquina virtual Ubuntu)
+    runs-on: ubuntu-latest
+
+    # Pasos que el job seguirá
+    steps:
+    - name: Clonar repositorio # Paso para descargar el código de tu repositorio
+      uses: actions/checkout@v4 # Usa la versión más reciente de la acción de checkout
+
+    - name: Configurar Node.js # Surge CLI necesita Node.js para funcionar
+      uses: actions/setup-node@v4 # Usa la versión más reciente de la acción de setup-node
+      with:
+        node-version: '20' # Puedes usar '18', '20' o 'latest'
+
+    - name: Instalar Surge CLI # Instala la herramienta de línea de comandos de Surge globalmente
+      run: npm install -g surge
+
+    - name: Desplegar a Surge.sh # El paso principal para desplegar
+      run: |
+        # El comando 'surge' automáticamente usará la variable de entorno SURGE_TOKEN para autenticación
+        # '--project ./' indica que el proyecto está en la raíz del repositorio
+        # '--domain ${{ secrets.SURGE_SUBDOMAIN }}.surge.sh' usa el subdominio de tus secretos de GitHub
+        surge --project ./ --domain ${{ secrets.SURGE_SUBDOMAIN }}.surge.sh
+      env:
+        # Esta variable de entorno es crucial para que Surge CLI se autentique.
+        # ${{ secrets.SURGE_API_KEY }} inyecta tu clave API desde los secretos de GitHub.
+        SURGE_TOKEN: ${{ secrets.SURGE_API_KEY }}
